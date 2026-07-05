@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 15,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-native",
+      "displayName": "Windows",
+      "description": "MINGW Build for development on Windows",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/windows",
+      "cacheVariables": {
+        "PLATFORM": "Windows"
+      },
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "gcc-11"
+        }
+      }
+    },
+    {
+      "name": "dos-8086",
+      "displayName": "DOS (ia16-elf-gcc)",
+      "description": "Cross-compilation for 8086 using toolchain",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/dos",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/ia16-toolchain.cmake",
+        "PLATFORM": "DOS"
+      }
+    },
+    {
+      "name": "bare-metal-8086",
+      "displayName": "Bare-metal (ia16-elf-gcc)",
+      "description": "Bare-metal cross-compilation for 8086 using toolchain",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/bare-metal",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/ia16-toolchain.cmake",
+        "PLATFORM": "BareMetal"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-native",
+      "configurePreset": "windows-native"
+    },
+    {
+      "name": "dos-8086",
+      "configurePreset": "dos-8086"
+    },
+    {
+      "name": "bare-metal-8086",
+      "configurePreset": "bare-metal-8086"
+    }
+  ]
+}

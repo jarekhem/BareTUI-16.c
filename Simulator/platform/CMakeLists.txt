@@ -1,0 +1,7 @@
+if ("$CACHE{PLATFORM}" STREQUAL "Windows")
+    add_subdirectory(win)
+elseif ("$CACHE{PLATFORM}" STREQUAL "DOS")
+    add_subdirectory(dos)
+elseif ("$CACHE{PLATFORM}" STREQUAL "BareMetal")
+    add_subdirectory(bare-metal)
+endif ()
