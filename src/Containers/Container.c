@@ -10,24 +10,28 @@ void TUI_Containers_Container_render(TUI_Widget* self, uint16_t* lineBuffer, uin
     assert(self);
 
     TUI_Containers_Container* c = (TUI_Containers_Container*)self;
+    uint8_t base_x = TUI_Widget_getAbsoluteX(self);
+    uint8_t base_y = TUI_Widget_getAbsoluteY(self);
 
     TUI_Widget* current = c->first_child;
     while (current != NULL)
     {
-        uint8_t absY = TUI_Widget_getAbsoluteY(current);
-        
-        if (current->visible && y >= absY && y < absY + current->height)
+        if (current->visible)
         {
-            uint8_t absX = TUI_Widget_getAbsoluteX(current);
-            uint8_t childEndX = absX + current->width - 1;
-
-            if (absX <= clipEndX && childEndX >= clipStartX)
+            uint8_t absY = base_y + current->y;
+            if (y >= absY && y < absY + current->height)
             {
-                uint8_t childClipStart = (absX > clipStartX) ? absX : clipStartX;
-                uint8_t childClipEnd = (childEndX < clipEndX) ? childEndX : clipEndX;
+                uint8_t absX = base_x + current->x;
+                uint8_t childEndX = absX + current->width - 1;
 
-                if (current->render)
-                    current->render(current, lineBuffer, y, childClipStart, childClipEnd);
+                if (absX <= clipEndX && childEndX >= clipStartX)
+                {
+                    uint8_t childClipStart = (absX > clipStartX) ? absX : clipStartX;
+                    uint8_t childClipEnd = (childEndX < clipEndX) ? childEndX : clipEndX;
+
+                    if (current->render)
+                        current->render(current, lineBuffer, y, childClipStart, childClipEnd);
+                }
             }
         }
         current = current->next_sibling;

@@ -11,7 +11,6 @@ void TUI_Widget_init(TUI_Widget* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, 
     d->y = y;
     d->width = w;
     d->height = h;
-    d->dirty = true;
     d->focusable = focusable;
     d->is_container = false;
     d->visible = true;
@@ -29,7 +28,6 @@ void TUI_Widget_invalidate(TUI_Widget* d)
 {
     assert(d);
 
-    d->dirty = true;
     TUI_Engine_invalidateArea(TUI_Widget_getAbsoluteX(d), TUI_Widget_getAbsoluteY(d), d->width, d->height);
 }
 

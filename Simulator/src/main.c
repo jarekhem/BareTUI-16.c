@@ -14,12 +14,6 @@ typedef union
 
 static FrontendHeap g_frontend_heap;
 
-/* Explicitly declare your HAL implementation */
-extern void vga_draw_char(uint8_t x, uint8_t y, char ch, uint8_t attr);
-extern void vga_draw_block(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* buffer);
-extern void vga_lock(void);
-extern void vga_unlock(void);
-
 static void VramFlush(const uint16_t* lineBuffer, uint8_t y, uint8_t startX, uint8_t endX)
 {
     uint8_t width = endX - startX + 1;

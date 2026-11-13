@@ -91,7 +91,7 @@ void kbd_init(void)
     if (!kbc_wait_read() || inb(KBC_DATA) != 0xAA)
         assert(false && "KB TEST failed");
 
-    /* --- KROK 5: Konfiguracja - Włączenie Translacji i wyłączenie IRQ --- */
+    /* --- KROK 5: Konfiguracja - Wyłączenie Translacji (czysty Set 2) i wyłączenie IRQ --- */
     kbc_wait_write();
     outb(KBC_CMD, 0x20); /* Komenda: Czytaj Command Byte */
     if (!kbc_wait_read())
@@ -99,7 +99,7 @@ void kbd_init(void)
 
     uint8_t cfg = inb(KBC_DATA);
 
-    cfg |= 0x40; /* Ustaw Bit 6: Enable Translation (Set 2 -> Set 1) */
+    cfg &= ~0x40; /* Wyczyść Bit 6: Disable Translation (zostawiamy natywny Set 2 AT) */
     cfg &= ~0x01; /* Wyczyść Bit 0: Disable IRQ1 (Działamy w Pollingu) */
 
     kbc_wait_write();

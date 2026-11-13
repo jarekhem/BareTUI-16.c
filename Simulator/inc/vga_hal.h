@@ -45,6 +45,7 @@ void vga_unlock(void);
 bool vga_init(void);
 bool vga_is_running(void);
 bool vga_get_key(uint16_t* keycode);
+void vga_draw_char(uint8_t x, uint8_t y, char ch, uint8_t attr);
 void vga_draw_block(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* buffer);
 void vga_set_cursor(uint8_t x, uint8_t y);
 void vga_shutdown(void);

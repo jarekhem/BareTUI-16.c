@@ -19,16 +19,22 @@ static void Label_Render(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y, uint
         if (start <= end)
         {
             uint16_t attr = (uint16_t)lbl->attr << 8;
-            for (int x = start; x <= end; x++)
+            const char* p = lbl->text;
+            uint8_t skip = start - abs_x;
+            while (skip > 0 && *p != '\0')
             {
-                uint8_t localX = x - abs_x;
-                uint16_t ch = ' ';
-                int i = 0;
-                while (i <= localX && lbl->text[i] != '\0') {
-                    if (i == localX) ch = (unsigned char)lbl->text[i];
-                    i++;
+                p++;
+                skip--;
+            }
+
+            for (uint8_t x = start; x <= end; x++)
+            {
+                uint8_t ch = ' ';
+                if (*p != '\0')
+                {
+                    ch = (uint8_t)*p++;
                 }
-                lineBuffer[x] = ch | attr;
+                lineBuffer[x] = (uint16_t)ch | attr;
             }
         }
     }
@@ -37,7 +43,11 @@ static void Label_Render(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y, uint
 void TUI_Widgets_Label_setAttr(TUI_Widgets_Label* lbl, uint8_t attr)
 {
     assert(lbl);
-    lbl->attr = attr;
+    if (lbl->attr != attr)
+    {
+        lbl->attr = attr;
+        TUI_Widget_invalidate(&lbl->base);
+    }
 }
 
 void TUI_Widgets_Label_init(TUI_Widgets_Label* lbl, uint8_t x, uint8_t y, uint8_t w, const char* text, uint8_t attr)

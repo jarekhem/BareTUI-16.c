@@ -20,26 +20,31 @@ static void RadioButton_Render(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y
         uint16_t color = (uint16_t)attr << 8;
         bool is_checked = (rb->shared_value != NULL && *(rb->shared_value) == rb->my_value);
 
-        for (int x = start; x <= end; x++)
+        const char* p = rb->text;
+        if (p && start > abs_x + 4)
+        {
+            uint8_t skip = start - (abs_x + 4);
+            while (skip > 0 && *p != '\0')
+            {
+                p++;
+                skip--;
+            }
+        }
+
+        for (uint8_t x = start; x <= end; x++)
         {
             uint8_t localX = x - abs_x;
-            uint16_t ch = ' ';
+            uint8_t ch = ' ';
 
             if (localX == 0) ch = '(';
             else if (localX == 1) ch = (is_checked ? '*' : ' ');
             else if (localX == 2) ch = ')';
-            else if (localX == 3) ch = ' ';
-            else if (rb->text)
+            else if (localX >= 4 && p && *p != '\0')
             {
-                int textIdx = localX - 4;
-                int i = 0;
-                while (i <= textIdx && rb->text[i] != '\0') {
-                    if (i == textIdx) ch = rb->text[i];
-                    i++;
-                }
+                ch = (uint8_t)*p++;
             }
 
-            lineBuffer[x] = ch | color;
+            lineBuffer[x] = (uint16_t)ch | color;
         }
     }
 }

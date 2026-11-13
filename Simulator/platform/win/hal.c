@@ -33,12 +33,8 @@ bool vga_init(void)
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
     vram_mutex = SDL_CreateMutex();
-    /* Start the background rendering thread */
-    render_thread = SDL_CreateThread(RenderThreadTask, "VgaRenderThread", NULL);
-    if (!render_thread)
-        return false;
 
-    /* Run until the emulator signals a shutdown */
+    /* Create window and renderer before starting the background rendering thread */
     window = SDL_CreateWindow("VGA Text Mode Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, VGA_COLS * FONT_WIDTH, VGA_ROWS * FONT_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window)
         return false;
@@ -61,6 +57,11 @@ bool vga_init(void)
     {
         printf("Warning: Failed to load font BMP: %s\n", SDL_GetError());
     }
+
+    /* Start the background rendering thread after resources are initialized */
+    render_thread = SDL_CreateThread(RenderThreadTask, "VgaRenderThread", NULL);
+    if (!render_thread)
+        return false;
 
     return true;
 }
@@ -116,12 +117,12 @@ void vga_draw_block(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* 
 {
     for (uint8_t row = 0; row < h; row++)
     {
+        uint16_t row_offset = (uint16_t)((y + row) * 80) + x;
         for (uint8_t col = 0; col < w; col++)
         {
             uint16_t cell = buffer[(row * w) + col];
-            unsigned char ch = (unsigned char)(cell & 0xFF);
-            uint8_t attr = (uint8_t)(cell >> 8);
-            vga_draw_char(x + col, y + row, ch, attr);
+            vga_buffer[row_offset + col].character = (unsigned char)(cell & 0xFF);
+            vga_buffer[row_offset + col].attribute = (uint8_t)(cell >> 8);
         }
     }
 }
@@ -180,7 +181,6 @@ void vga_update(void)
     }
 
     SDL_RenderPresent(renderer);
-    SDL_Delay(32);
 }
 
 void vga_set_cursor(uint8_t x, uint8_t y)

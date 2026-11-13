@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include "Event.h"
-#include "Hal.h"
 
 typedef struct TUI_Widget TUI_Widget;
 
@@ -12,7 +11,6 @@ typedef struct TUI_Widget
 {
     uint8_t x, y;
     uint8_t width, height;
-    bool dirty;
     bool focusable;
     bool is_container;
     bool visible;

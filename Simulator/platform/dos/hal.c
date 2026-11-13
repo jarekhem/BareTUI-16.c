@@ -54,15 +54,28 @@ void vga_draw_char(uint8_t x, uint8_t y, char ch, uint8_t attr)
 
 void vga_draw_block(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* buffer)
 {
+    if (w == 0 || h == 0) return;
+
+    uint16_t dst_offset = ((uint16_t)y * 80 + x) * 2;
+
     for (uint8_t row = 0; row < h; row++)
     {
-        for (uint8_t col = 0; col < w; col++)
-        {
-            uint16_t cell = buffer[(row * w) + col];
-            char ch = (char)(cell & 0xFF);
-            uint8_t attr = (uint8_t)(cell >> 8);
-            vga_draw_char(x + col, y + row, ch, attr);
-        }
+        const uint16_t* src = buffer + (uint16_t)row * w;
+        uint16_t count = w;
+        uint16_t di = dst_offset;
+
+        __asm__ __volatile__(
+            "push %%es\n\t"
+            "movw %3, %%es\n\t"
+            "cld\n\t"
+            "rep movsw\n\t"
+            "pop %%es"
+            : "+S"(src), "+D"(di), "+c"(count)
+            : "r"(vga_segment)
+            : "memory", "cc"
+        );
+
+        dst_offset += 80 * 2;
     }
 }
 
