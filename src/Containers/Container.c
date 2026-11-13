@@ -1,27 +1,9 @@
 #include "TUI/Containers/Container.h"
+#include "TUI/Engine.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-static void SwitchFocus(TUI_Containers_Container* c, TUI_Widget* new_focus)
-{
-    assert(c);
-
-    if (c->focused_child && c->focused_child->handle_event)
-    {
-        TUI_Event lost_event;
-        lost_event.type = TUI_EVENT_FOCUS_LOST;
-        c->focused_child->handle_event(c->focused_child, &lost_event);
-    }
-    c->focused_child = new_focus;
-    if (c->focused_child && c->focused_child->handle_event)
-    {
-        TUI_Event gain_event;
-        gain_event.type = TUI_EVENT_FOCUS_GAIN;
-        c->focused_child->handle_event(c->focused_child, &gain_event);
-    }
-}
 
 void TUI_Containers_Container_render(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y, uint8_t clipStartX, uint8_t clipEndX)
 {
@@ -52,35 +34,14 @@ void TUI_Containers_Container_render(TUI_Widget* self, uint16_t* lineBuffer, uin
     }
 }
 
-static void Container_Render_Default(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y, uint8_t clipStartX, uint8_t clipEndX)
-{
-    assert(self);
-
-    TUI_Containers_Container_render(self, lineBuffer, y, clipStartX, clipEndX);
-}
-
-bool TUI_Containers_Container_handleEvent(TUI_Widget* self, const TUI_Event* event)
-{
-    assert(self);
-    assert(event);
-
-    TUI_Containers_Container* c = (TUI_Containers_Container*)self;
-
-    if (c->focused_child && c->focused_child->handle_event)
-    {
-        if (c->focused_child->handle_event(c->focused_child, event))
-            return true;
-    }
-    return false;
-}
-
 void TUI_Containers_Container_init(TUI_Containers_Container* c, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
     assert(c);
 
     TUI_Widget_init(&c->base, x, y, w, h, false);
-    c->base.render = Container_Render_Default;
-    c->base.handle_event = TUI_Containers_Container_handleEvent;
+    c->base.is_container = true;
+    c->base.render = TUI_Containers_Container_render;
+    c->base.handle_event = NULL;
     c->first_child = NULL;
     c->focused_child = NULL;
 }
@@ -107,13 +68,30 @@ void TUI_Containers_Container_add(TUI_Containers_Container* c, TUI_Widget* child
         current->next_sibling = child;
     }
 
-    if (child->focusable && c->focused_child == NULL)
-        c->focused_child = child;
+    if (child->focusable)
+    {
+        TUI_Widget* curr = child;
+        TUI_Widget* parent = curr->parent;
+        while (parent != NULL)
+        {
+            parent->focusable = true;
+            if (parent->is_container)
+            {
+                TUI_Containers_Container* pc = (TUI_Containers_Container*)parent;
+                if (pc->focused_child == NULL && curr->visible)
+                {
+                    pc->focused_child = curr;
+                }
+            }
+            curr = parent;
+            parent = parent->parent;
+        }
+    }
 }
-
 
 void TUI_Containers_Container_setFocus(TUI_Containers_Container* c, TUI_Widget* child)
 {
-    /* Forward the manual focus request to the internal static handler */
-    SwitchFocus(c, child);
+    assert(c);
+    c->focused_child = child;
+    TUI_Engine_setFocus(child != NULL ? child : (TUI_Widget*)c);
 }

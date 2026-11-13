@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+extern bool g_en_uart;
+extern bool g_en_dma;
+
 static void set_up(TUI_Screen* s) { (void)s; }
 static void tear_down(TUI_Screen* s) { (void)s; }
 
@@ -24,7 +27,6 @@ void MainScreen_Init(MainScreen* screen, bool* en_uart, bool* en_dma)
 
     /* Main background panel */
     TUI_Containers_Panel_init(&screen->panel, 0, 0, 80, 25, attr_panel_bg, attr_border);
-    screen->panel.base.base.focusable = true;
 
     /* Tab Container setup - spans across the panel */
     TUI_Containers_TabContainer_init(&screen->tabs, 1, 1, 78, 23, attr_tab_header, attr_tab_active);
@@ -59,10 +61,13 @@ void MainScreen_Init(MainScreen* screen, bool* en_uart, bool* en_dma)
 
     /* Build the UI tree */
     TUI_Containers_Container_add((TUI_Containers_Container*)&screen->panel, (TUI_Widget*)&screen->tabs);
-
-    /* Focus the tabs initially */
-    TUI_Containers_Container_setFocus((TUI_Containers_Container*)&screen->panel, (TUI_Widget*)&screen->tabs);
-
-    /* Add the panel to the screen */
     TUI_Containers_Container_add((TUI_Containers_Container*)screen, (TUI_Widget*)&screen->panel);
+}
+
+TUI_Screen* MainScreen_Create(void* heap)
+{
+    assert(heap != NULL);
+    MainScreen* screen = (MainScreen*)heap;
+    MainScreen_Init(screen, &g_en_uart, &g_en_dma);
+    return &screen->base;
 }

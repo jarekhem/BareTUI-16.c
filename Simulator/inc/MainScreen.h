@@ -30,3 +30,4 @@ typedef struct
 } MainScreen;
 
 void MainScreen_Init(MainScreen* screen, bool* en_uart, bool* en_dma);
+TUI_Screen* MainScreen_Create(void* heap);

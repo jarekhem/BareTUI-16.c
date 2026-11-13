@@ -205,7 +205,7 @@ static void clearScreen(uint8_t attr)
         vga_draw_char(i % 80, i / 80, ' ', attr);
 }
 
-void __assert_func(const char* file, int line, const char* func, const char* failedexpr)
+void __attribute__((noreturn)) __assert_func(const char* file, int line)
 {
     /* 0x4F = White text on Red background for a panic screen */
     uint8_t attr = 0x4F;
@@ -214,23 +214,13 @@ void __assert_func(const char* file, int line, const char* func, const char* fai
     printText(2, 1, "=== ASSERTION FAILED ===", attr);
 
     uint8_t x = 2;
-    x = printText(x, 3, "Condition : ", attr);
-    printText(x, 3, failedexpr ? failedexpr : "UNKNOWN", attr);
+    x = printText(x, 3, "File : ", attr);
+    x = printText(x, 3, file ? file : "?", attr);
+    x = printText(x, 3, " : ", attr);
 
-    const char* short_file = file ? file : "UNKNOWN";
-
-    x = 2;
-    x = printText(x, 4, "File      : ", attr);
-    x = printText(x, 4, short_file, attr);
-    x = printText(x, 4, " : ", attr);
-
-    char line_buf[16];
+    char line_buf[8];
     itoa(line, line_buf, 10);
-    printText(x, 4, line_buf, attr);
-
-    x = 2;
-    x = printText(x, 5, "Function  : ", attr);
-    printText(x, 5, func ? func : "UNKNOWN", attr);
+    printText(x, 3, line_buf, attr);
 
     asm volatile (
         "xchg %bx, %bx\n\t"

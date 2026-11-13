@@ -1,5 +1,6 @@
 #include "../../Simulator/inc/vga_hal.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #define NASM(code) ".intel_syntax noprefix\n\t" code "\n\t.att_syntax prefix"
 
@@ -145,6 +146,33 @@ bool vga_get_key(uint16_t* keycode)
         return true;
     }
     return false;
+}
+
+static uint8_t printText(uint8_t x, uint8_t y, const char* str, uint8_t attr)
+{
+    while (*str != '\0' && x < 80)
+        vga_draw_char(x++, y, *str++, attr);
+    return x;
+}
+
+void __attribute__((noreturn)) __assert_func(const char* file, int line)
+{
+    uint8_t attr = 0x4F;
+    for (int i = 0; i < 80 * 25; i++)
+        vga_draw_char(i % 80, i / 80, ' ', attr);
+
+    printText(2, 1, "=== ASSERTION FAILED ===", attr);
+
+    uint8_t x = 2;
+    x = printText(x, 3, "File : ", attr);
+    x = printText(x, 3, file ? file : "?", attr);
+    x = printText(x, 3, " : ", attr);
+
+    char line_buf[8];
+    itoa(line, line_buf, 10);
+    printText(x, 3, line_buf, attr);
+
+    while (1);
 }
 
 int main(void)

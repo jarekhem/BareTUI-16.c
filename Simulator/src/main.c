@@ -6,6 +6,14 @@
 bool g_en_uart = false;
 bool g_en_dma = true;
 
+/* FrontendHeap holds the largest active screen in static memory (.bss) */
+typedef union
+{
+    MainScreen main_screen;
+} FrontendHeap;
+
+static FrontendHeap g_frontend_heap;
+
 /* Explicitly declare your HAL implementation */
 extern void vga_draw_char(uint8_t x, uint8_t y, char ch, uint8_t attr);
 extern void vga_draw_block(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* buffer);
@@ -34,12 +42,9 @@ void app_main(void)
     vga_init();
     RawClearScreen();
 
-    /* 2. Init UI Engine and Screens */
-    MainScreen main_screen;
-
-    MainScreen_Init(&main_screen, &g_en_uart, &g_en_dma);
-    TUI_Engine_init(VramFlush);
-    TUI_Engine_changeScreen(&main_screen.base);
+    /* 2. Init UI Engine and Screens on FrontendHeap */
+    TUI_Engine_init(VramFlush, &g_frontend_heap);
+    TUI_Engine_changeScreen(MainScreen_Create);
 
     bool is_running = true;
     /* 3. Run Event Loop */
@@ -51,19 +56,23 @@ void app_main(void)
         {
             if (key == TUI_KEY_ESC)
             {
-                is_running = false;
+                if (!TUI_Engine_popScreen())
+                {
+                    is_running = false;
+                    continue;
+                }
+            }
+            else
+            {
+                TUI_Event e;
+                e.type = TUI_EVENT_KEY;
+                e.key.keycode = key;
+                TUI_Engine_poll(&e);
                 continue;
             }
+        }
 
-            TUI_Event e;
-            e.type = TUI_EVENT_KEY;
-            e.key.keycode = key;
-            TUI_Engine_poll(&e);
-        }
-        else
-        {
-            TUI_Engine_poll(NULL);
-        }
+        TUI_Engine_poll(NULL);
     }
 
     /* 4. Teardown & POST continuation */

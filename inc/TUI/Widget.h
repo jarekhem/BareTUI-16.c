@@ -14,7 +14,7 @@ typedef struct TUI_Widget
     uint8_t width, height;
     bool dirty;
     bool focusable;
-    bool interactive;
+    bool is_container;
     bool visible;
 
     TUI_Widget* parent;

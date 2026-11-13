@@ -1,8 +1,9 @@
 #include "TUI/Containers/ColumnGroup.h"
+#include "TUI/Containers/Container.h"
+#include "TUI/Engine.h"
+
 #include <assert.h>
 #include <stddef.h>
-
-#include "TUI/Containers/Container.h"
 
 static bool ColumnGroup_HandleEvent(TUI_Widget* self, const TUI_Event* event)
 {
@@ -12,22 +13,15 @@ static bool ColumnGroup_HandleEvent(TUI_Widget* self, const TUI_Event* event)
     TUI_Containers_ColumnGroup* col = (TUI_Containers_ColumnGroup*)self;
     TUI_Containers_Container* container = &col->base;
 
-    if (container->first_child == NULL)
-        return false;
-
-    /* Forward Focus changes directly to the currently active child */
     if (event->type == TUI_EVENT_FOCUS_GAIN || event->type == TUI_EVENT_FOCUS_LOST)
     {
         col->is_focused = (event->type == TUI_EVENT_FOCUS_GAIN);
-        if (container->focused_child && container->focused_child->handle_event)
-        {
-            TUI_Event focus_event;
-            focus_event.type = event->type;
-            container->focused_child->handle_event(container->focused_child, &focus_event);
-        }
         TUI_Widget_invalidate(self);
         return true;
     }
+
+    if (container->first_child == NULL)
+        return false;
 
     if (event->type == TUI_EVENT_KEY)
     {
@@ -56,7 +50,7 @@ static bool ColumnGroup_HandleEvent(TUI_Widget* self, const TUI_Event* event)
             if (prev == NULL) prev = last_focusable;
 
             if (prev)
-                TUI_Containers_Container_setFocus(container, prev);
+                TUI_Engine_setFocus(prev);
 
             return true;
         }
@@ -97,16 +91,10 @@ static bool ColumnGroup_HandleEvent(TUI_Widget* self, const TUI_Event* event)
             }
 
             if (next)
-                TUI_Containers_Container_setFocus(container, next);
+                TUI_Engine_setFocus(next);
 
             return true;
         }
-    }
-
-    /* Forward other events directly to the currently active child */
-    if (container->focused_child && container->focused_child->handle_event)
-    {
-        return container->focused_child->handle_event(container->focused_child, event);
     }
 
     return false;
@@ -127,26 +115,6 @@ bool TUI_Containers_ColumnGroup_addItem(TUI_Containers_ColumnGroup* col, TUI_Wid
     assert(col);
     assert(item);
 
-    item->parent = (TUI_Widget*)col;
-    item->next_sibling = NULL;
-
-    if (col->base.first_child == NULL)
-    {
-        col->base.first_child = item;
-        if (item->focusable)
-            col->base.focused_child = item;
-    }
-    else
-    {
-        TUI_Widget* current = col->base.first_child;
-        while (current->next_sibling != NULL)
-            current = current->next_sibling;
-
-        current->next_sibling = item;
-
-        if (item->focusable && col->base.focused_child == NULL)
-            col->base.focused_child = item;
-    }
-
+    TUI_Containers_Container_add(&col->base, item);
     return true;
 }

@@ -13,12 +13,13 @@ void TUI_Widget_init(TUI_Widget* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, 
     d->height = h;
     d->dirty = true;
     d->focusable = focusable;
-    d->interactive = focusable; // Default behavior
+    d->is_container = false;
     d->visible = true;
 
     d->parent = NULL;
     d->next_sibling = NULL;
 
+    d->render = NULL;
     d->handle_event = NULL;
 }
 

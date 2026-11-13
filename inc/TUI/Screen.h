@@ -4,6 +4,8 @@
 
 typedef struct TUI_Screen TUI_Screen;
 
+typedef TUI_Screen* (*TUI_ScreenFactory)(void* heap);
+
 typedef struct TUI_Screen
 {
     TUI_Containers_Container root;
@@ -12,4 +14,3 @@ typedef struct TUI_Screen
 } TUI_Screen;
 
 void TUI_Screen_init(TUI_Screen* screen);
-void TUI_Screen_handleEvent(TUI_Screen* screen, const TUI_Event* event);

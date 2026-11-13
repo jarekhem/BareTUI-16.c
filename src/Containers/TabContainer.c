@@ -1,26 +1,10 @@
 #include "TUI/Containers/TabContainer.h"
+#include "TUI/Engine.h"
 
 #include <assert.h>
 #include <string.h>
 
 #define TITLE_MAX_LEN   16
-
-static void SwitchFocusInsideTabContainer(TUI_Containers_TabContainer* tab)
-{
-    assert(tab);
-    if (tab->active_tab >= 0 && tab->active_tab < tab->tab_count)
-    {
-        TUI_Widget* active_content = tab->tab_contents[tab->active_tab];
-        if (active_content && active_content->focusable)
-        {
-            TUI_Containers_Container_setFocus(&tab->base, active_content);
-        }
-        else
-        {
-            TUI_Containers_Container_setFocus(&tab->base, NULL);
-        }
-    }
-}
 
 static void TabContainer_Render(TUI_Widget* self, uint16_t* lineBuffer, uint8_t y, uint8_t clipStartX, uint8_t clipEndX)
 {
@@ -93,13 +77,30 @@ static bool TabContainer_HandleEvent(TUI_Widget* self, const TUI_Event* event)
     assert(event);
     TUI_Containers_TabContainer* tab = (TUI_Containers_TabContainer*)self;
 
-    // Architecture fix: Bottom-up event propagation.
-    // First, pass event down to the focused child (which should be inside the active tab).
-    bool handled = TUI_Containers_Container_handleEvent(self, event);
-    if (handled)
+    /* Synchronize active tab if focus was restored directly to a child inside a specific tab */
+    if (event->type == TUI_EVENT_FOCUS_GAIN)
+    {
+        for (int i = 0; i < tab->tab_count; i++)
+        {
+            if (tab->tab_contents[i] == tab->base.focused_child)
+            {
+                if (tab->active_tab != i)
+                {
+                    if (tab->active_tab >= 0 && tab->active_tab < tab->tab_count)
+                    {
+                        tab->tab_contents[tab->active_tab]->visible = false;
+                    }
+                    tab->active_tab = i;
+                    tab->tab_contents[i]->visible = true;
+                    TUI_Widget_invalidate(self);
+                }
+                break;
+            }
+        }
         return true;
+    }
 
-    // If the child did not handle it, the TabContainer can process it (e.g. for tab switching).
+    /* Events arrive here via bottom-up bubbling only if unhandled by focused child inside the tab */
     if (event->type == TUI_EVENT_KEY)
     {
         if (event->key.keycode == TUI_KEY_LEFT)
@@ -151,14 +152,13 @@ void TUI_Containers_TabContainer_addTab(TUI_Containers_TabContainer* tab, const 
         tab->tab_titles[tab->tab_count] = title;
         tab->tab_contents[tab->tab_count] = content;
 
-        TUI_Containers_Container_add(&tab->base, content);
+        content->visible = (tab->tab_count == 0);
 
-        content->visible = false;
+        TUI_Containers_Container_add(&tab->base, content);
 
         if (tab->tab_count == 0)
         {
             tab->active_tab = 0;
-            content->visible = true;
             if (content->focusable)
             {
                 tab->base.focused_child = content;
@@ -179,9 +179,11 @@ void TUI_Containers_TabContainer_setActiveTab(TUI_Containers_TabContainer* tab, 
             tab->tab_contents[tab->active_tab]->visible = false;
         }
         tab->active_tab = index;
-        tab->tab_contents[tab->active_tab]->visible = true;
+        TUI_Widget* active_content = tab->tab_contents[tab->active_tab];
+        active_content->visible = true;
+        tab->base.focused_child = active_content;
 
-        SwitchFocusInsideTabContainer(tab);
+        TUI_Engine_setFocus(active_content->focusable ? active_content : (TUI_Widget*)tab);
 
         TUI_Widget_invalidate((TUI_Widget*)tab);
     }

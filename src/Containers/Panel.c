@@ -58,7 +58,6 @@ void TUI_Containers_Panel_init(TUI_Containers_Panel* panel, uint8_t x, uint8_t y
     TUI_Containers_Container_init(&panel->base, x, y, width, height);
 
     panel->base.base.render = Panel_Render;
-    panel->base.base.handle_event = TUI_Containers_Container_handleEvent;
 
     panel->bg_attr = bg_attr;
     panel->border_attr = border_attr;
