@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "../../Simulator/inc/vga_hal.h"
+#include <romloader_client.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -9,13 +10,13 @@ uint16_t vga_segment;
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t ret;
-    __asm__ __volatile__("inb %%dx, %%al" : "=a"(ret) : "d"(port));
+    __asm__ __volatile__("inb %%dx, %%al" : "=Ral"(ret) : "d"(port));
     return ret;
 }
 
 static inline void outb(uint16_t port, uint8_t val)
 {
-    __asm__ __volatile__("outb %%al, %%dx" : : "a"(val), "d"(port));
+    __asm__ __volatile__("outb %%al, %%dx" : : "Ral"(val), "d"(port));
 }
 
 /* Natywne kody AT (Scancode Set 2) */
@@ -117,6 +118,9 @@ void vga_unlock(void)
 
 bool vga_get_key(uint16_t* out_key)
 {
+    /* Allow hands-free auto-reboot back to RomLoader-16 when a new upload starts on COM3 */
+    romloader_poll_autoreboot();
+
     /* Zmienna statyczna pamięta stan pomiędzy wywołaniami pętli */
     static bool expect_break = false;
     uint8_t scancode;

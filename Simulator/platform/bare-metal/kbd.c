@@ -9,13 +9,13 @@
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t ret;
-    __asm__ __volatile__("inb %%dx, %%al" : "=a"(ret) : "d"(port));
+    __asm__ __volatile__("inb %%dx, %%al" : "=Ral"(ret) : "d"(port));
     return ret;
 }
 
 static inline void outb(uint16_t port, uint8_t val)
 {
-    __asm__ __volatile__("outb %%al, %%dx" : : "a"(val), "d"(port));
+    __asm__ __volatile__("outb %%al, %%dx" : : "Ral"(val), "d"(port));
 }
 
 /* Klasyczne inżynierskie opóźnienie szyny ISA.
@@ -23,7 +23,7 @@ static inline void outb(uint16_t port, uint8_t val)
  * odczekanie cykli sprzętowych szyny. */
 static inline void io_wait(void)
 {
-    __asm__ __volatile__("outb %%al, $0x80" : : "a"(0));
+    __asm__ __volatile__("outb %%al, $0x80" : : "Ral"((uint8_t)0));
 }
 
 /* Oczekiwanie aż bufor wejściowy KBC będzie pusty (można wysyłać) */

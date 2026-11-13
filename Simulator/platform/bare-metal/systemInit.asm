@@ -101,7 +101,9 @@ timer8254_init:
 lowRamTested:
 ;    jc systemInit_error                       ; low ram invalid - halt!
     xor ax, ax      ; fill with zeros
+    mov es, ax
     mov cx, ramTestBlockSize_kB * 512
     xor di, di
+    cld
     rep stosw
     ret
